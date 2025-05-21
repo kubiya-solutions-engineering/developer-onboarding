@@ -5,7 +5,7 @@ from kubiya_sdk.tools.registry import tool_registry
 # Simplified IAM user creation with single group assignment
 iam_create_user = AWSCliTool(
     name="iam_create_user",
-    description="Create a new IAM user and add to a group",
+    description="Onboard a new developer by creating an IAM user and adding them to the appropriate team group",
     content="""
 #!/bin/sh
 set -e
@@ -43,7 +43,7 @@ echo "✅ IAM user ${user_name} setup complete"
 # Add user to GitHub using email and add to a team
 github_add_user = GitHubRepolessCliTool(
     name="github_add_user",
-    description="Invite a user to a GitHub organization using their email address and add to a team",
+    description="Onboard a new developer by inviting them to the GitHub organization and adding them to the appropriate team (frontend or backend)",
     content="""
 #!/bin/sh
 set -e
