@@ -152,8 +152,8 @@ fi
 )
 
 # Register all developer onboarding tools
-for tool in [iam_onboard_developer, github_onboard_developer]:
+for tool in [iam_create_user_onboard_developer, github__add_user_onboard_developer]:
     tool_registry.register("developer_onboarding", tool)
 
 # Export all developer onboarding tools
-__all__ = ['iam_onboard_developer', 'github_onboard_developer']
+__all__ = ['iam_create_user_onboard_developer', 'github__add_user_onboard_developer']
