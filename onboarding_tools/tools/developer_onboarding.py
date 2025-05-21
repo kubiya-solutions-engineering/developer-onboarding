@@ -3,8 +3,8 @@ from .base import AWSCliTool, GitHubRepolessCliTool
 from kubiya_sdk.tools.registry import tool_registry
 
 # Simplified IAM user creation with single group assignment
-iam_create_user = AWSCliTool(
-    name="onboard_developer_aws",
+iam_create_user_onboard_developer = AWSCliTool(
+    name="iam_create_user_onboard_developer",
     description="Onboard a new developer by creating an IAM user and adding them to the appropriate team group",
     content="""
 #!/bin/sh
@@ -42,8 +42,8 @@ echo "✅ AWS developer onboarding complete for ${user_name}"
 )
 
 # Add user to GitHub using email and add to a team
-github_add_user = GitHubRepolessCliTool(
-    name="onboard_developer_github",
+github__add_user_onboard_developer = GitHubRepolessCliTool(
+    name="github__add_user_onboard_developer",
     description="Onboard a new developer by inviting them to the GitHub organization and adding them to the appropriate team (frontend or backend)",
     content="""
 #!/bin/sh
@@ -152,8 +152,8 @@ fi
 )
 
 # Register all developer onboarding tools
-for tool in [iam_create_user, github_add_user]:
+for tool in [iam_onboard_developer, github_onboard_developer]:
     tool_registry.register("developer_onboarding", tool)
 
 # Export all developer onboarding tools
-__all__ = ['iam_create_user', 'github_add_user']
+__all__ = ['iam_onboard_developer', 'github_onboard_developer']
