@@ -4,12 +4,13 @@ from kubiya_sdk.tools.registry import tool_registry
 
 # Simplified IAM user creation with single group assignment
 iam_create_user = AWSCliTool(
-    name="iam_create_user",
+    name="onboard_developer_aws",
     description="Onboard a new developer by creating an IAM user and adding them to the appropriate team group",
     content="""
 #!/bin/sh
 set -e
 
+echo "🚀 Starting AWS developer onboarding process"
 echo "👤 Creating new IAM user: ${user_name}"
 
 # Create the user
@@ -33,7 +34,7 @@ else
     exit 1
 fi
 
-echo "✅ IAM user ${user_name} setup complete"
+echo "✅ AWS developer onboarding complete for ${user_name}"
 """,
     args=[
         Arg(name="user_name", type="str", description="Name of the IAM user to create", required=True),
@@ -42,11 +43,13 @@ echo "✅ IAM user ${user_name} setup complete"
 
 # Add user to GitHub using email and add to a team
 github_add_user = GitHubRepolessCliTool(
-    name="github_add_user",
+    name="onboard_developer_github",
     description="Onboard a new developer by inviting them to the GitHub organization and adding them to the appropriate team (frontend or backend)",
     content="""
 #!/bin/sh
 set -e
+
+echo "🚀 Starting GitHub developer onboarding process"
 
 # Get organization from environment variable
 ORGANIZATION=${GH_ORG}
@@ -73,7 +76,7 @@ else
     exit 1
 fi
 
-echo "👤 Inviting user to GitHub organization..."
+echo "👤 Onboarding developer to GitHub organization..."
 echo "📧 Email: ${email}"
 echo "🏢 Organization: $ORGANIZATION"
 echo "👥 Team: $TEAM"
@@ -134,6 +137,7 @@ if gh api --method POST "orgs/$ORGANIZATION/invitations" --input /tmp/invite.jso
     echo "👥 User will be added to team '$TEAM' upon accepting the invitation"
     echo "📧 The user will receive an email to accept the invitation"
     echo "🔗 You can check pending invitations at: https://github.com/orgs/$ORGANIZATION/people/pending_invitations"
+    echo "✅ GitHub developer onboarding complete"
 else
     echo "❌ Failed to send organization invitation"
     echo "📄 Request payload was:"
