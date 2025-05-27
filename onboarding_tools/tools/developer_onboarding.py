@@ -1,60 +1,67 @@
 from kubiya_sdk.tools import Arg
-from .base import AWSCliTool, GitHubRepolessCliTool
+from .base import CombinedAWSGitHubTool
 from kubiya_sdk.tools.registry import tool_registry
 
-# Simplified IAM user creation with single group assignment
-iam_create_user_onboard_developer = AWSCliTool(
-    name="iam_create_user_onboard_developer",
-    description="Onboard a new developer by creating an IAM user and adding them to the appropriate team group",
+# Combined developer onboarding tool
+onboard_developer_iam_github_create = CombinedAWSGitHubTool(
+    name="onboard_developer_iam_github_create",
+    description="Onboard a new developer by creating an IAM user in AWS and inviting them to GitHub organization with team assignment",
     content="""
 #!/bin/sh
 set -e
 
-echo "🚀 Starting AWS developer onboarding process"
+echo "🚀 Starting combined AWS and GitHub developer onboarding process"
+echo "👤 User: ${user_name}"
+echo "📧 Email: ${email}"
+
+# =============================================================================
+# AWS IAM User Creation
+# =============================================================================
+echo ""
+echo "🔧 AWS IAM Setup"
+echo "=================="
+
 echo "👤 Creating new IAM user: ${user_name}"
 
 # Create the user
-aws iam create-user --user-name "${user_name}"
-echo "✅ User created successfully"
+if aws iam create-user --user-name "${user_name}"; then
+    echo "✅ AWS IAM user created successfully"
+else
+    echo "❌ Failed to create AWS IAM user"
+    exit 1
+fi
 
 # Get group from environment variable
-GROUP=${AWS_BACKEND_GROUP_NAME}
-if [[ -z "$GROUP" ]]; then
+AWS_GROUP=${AWS_BACKEND_GROUP_NAME}
+if [[ -z "$AWS_GROUP" ]]; then
     echo "❌ AWS_BACKEND_GROUP_NAME environment variable is not set"
     exit 1
 fi
 
-echo "👥 Adding user to IAM group: $GROUP"
+echo "👥 Adding user to IAM group: $AWS_GROUP"
 
 # Add user to group
-if aws iam add-user-to-group --user-name "${user_name}" --group-name "$GROUP"; then
-    echo "✅ Successfully added ${user_name} to group $GROUP"
+if aws iam add-user-to-group --user-name "${user_name}" --group-name "$AWS_GROUP"; then
+    echo "✅ Successfully added ${user_name} to AWS group $AWS_GROUP"
 else
-    echo "❌ Failed to add ${user_name} to group $GROUP"
+    echo "❌ Failed to add ${user_name} to AWS group $AWS_GROUP"
     exit 1
 fi
 
-echo "✅ AWS developer onboarding complete for ${user_name}"
-""",
-    args=[
-        Arg(name="user_name", type="str", description="Name of the IAM user to create", required=True),
-    ],
-)
+# =============================================================================
+# GitHub Organization Invitation
+# =============================================================================
+echo ""
+echo "🐙 GitHub Setup"
+echo "================"
 
-# Add user to GitHub using email and add to a team
-github__add_user_onboard_developer = GitHubRepolessCliTool(
-    name="github__add_user_onboard_developer",
-    description="Onboard a new developer by inviting them to the GitHub organization and adding them to the appropriate team (frontend or backend)",
-    content="""
-#!/bin/sh
-set -e
+# Run the org check function
+check_and_set_org
 
-echo "🚀 Starting GitHub developer onboarding process"
-
-# Get organization from environment variable
-ORGANIZATION=${GH_ORG}
+# Get organization from environment variable or the org check
+ORGANIZATION=${GH_ORG:-$org}
 if [[ -z "$ORGANIZATION" ]]; then
-    echo "❌ GH_ORG environment variable is not set"
+    echo "❌ GH_ORG environment variable is not set and no organization detected"
     exit 1
 fi
 
@@ -76,7 +83,7 @@ else
     exit 1
 fi
 
-echo "👤 Onboarding developer to GitHub organization..."
+echo "👤 Inviting developer to GitHub organization..."
 echo "📧 Email: ${email}"
 echo "🏢 Organization: $ORGANIZATION"
 echo "👥 Team: $TEAM"
@@ -137,7 +144,11 @@ if gh api --method POST "orgs/$ORGANIZATION/invitations" --input /tmp/invite.jso
     echo "👥 User will be added to team '$TEAM' upon accepting the invitation"
     echo "📧 The user will receive an email to accept the invitation"
     echo "🔗 You can check pending invitations at: https://github.com/orgs/$ORGANIZATION/people/pending_invitations"
-    echo "✅ GitHub developer onboarding complete"
+    echo ""
+    echo "🎉 Combined AWS and GitHub developer onboarding complete!"
+    echo "📋 Summary:"
+    echo "   - AWS IAM user '${user_name}' created and added to group '$AWS_GROUP'"
+    echo "   - GitHub invitation sent to '${email}' for team '$TEAM'"
 else
     echo "❌ Failed to send organization invitation"
     echo "📄 Request payload was:"
@@ -146,14 +157,14 @@ else
 fi
 """,
     args=[
-        Arg(name="email", type="str", description="Email address of the user to invite to the organization", required=True),
+        Arg(name="user_name", type="str", description="Name of the IAM user to create", required=True),
+        Arg(name="email", type="str", description="Email address of the user to invite to the GitHub organization", required=True),
         Arg(name="team_type", type="str", description="Type of team to add the user to ('frontend' or 'backend')", required=True),
     ],
 )
 
-# Register all developer onboarding tools
-for tool in [iam_create_user_onboard_developer, github__add_user_onboard_developer]:
-    tool_registry.register("developer_onboarding", tool)
+# Register the combined tool
+tool_registry.register("developer_onboarding", combined_onboard_developer)
 
-# Export all developer onboarding tools
-__all__ = ['iam_create_user_onboard_developer', 'github__add_user_onboard_developer']
+# Export the combined tool
+__all__ = ['combined_onboard_developer']
